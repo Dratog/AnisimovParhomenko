@@ -7,6 +7,7 @@
 from fastapi import FastAPI
 from pydantic import BaseModel
 
+from orders.api import router
 from orders.config import settings
 
 app = FastAPI(
@@ -14,6 +15,8 @@ app = FastAPI(
     description="Заготовка.",
     version="0.1.0",
 )
+
+app.include_router(router)
 
 
 class HealthRead(BaseModel):
