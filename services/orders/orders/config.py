@@ -11,6 +11,8 @@ from pydantic_settings import BaseSettings, SettingsConfigDict
 class Settings(BaseSettings):
     model_config = SettingsConfigDict(env_file=".env", extra="ignore")
 
+    database_url: str = "sqlite:///./orders.db"
+
     service_name: str = "orders"
 
     # Куда ходить за проверкой клиента.
