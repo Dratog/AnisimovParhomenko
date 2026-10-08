@@ -1,4 +1,4 @@
-"""Тесты создания заказа."""
+"""Тесты создания и получения заказа."""
 
 import pytest
 
@@ -29,3 +29,28 @@ def test_invalid_order_payload_returns_422(client, payload, field):
 
     assert response.status_code == 422
     assert any(field in error["loc"] for error in response.json()["detail"])
+
+
+def test_read_created_order(client, order_payload):
+    client.post("/orders", json=order_payload)
+    payload = order_payload | {"account_id": 2, "item": "Чайник", "quantity": 3}
+    created_response = client.post("/orders", json=payload)
+    assert created_response.status_code == 201
+    created = created_response.json()
+
+    response = client.get(f"/orders/{created['id']}")
+
+    assert response.status_code == 200
+    assert response.json() == created
+    assert response.json()["account_id"] == payload["account_id"]
+    assert response.json()["item"] == payload["item"]
+    assert response.json()["quantity"] == payload["quantity"]
+
+
+def test_read_missing_order_returns_404_with_requested_id(client):
+    order_id = 99999
+
+    response = client.get(f"/orders/{order_id}")
+
+    assert response.status_code == 404
+    assert str(order_id) in response.json()["detail"]
