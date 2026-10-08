@@ -1,6 +1,7 @@
 """Запросы к сервису заказов."""
 
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, Query, status
+from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from orders.db import get_session
@@ -22,6 +23,16 @@ def create_order(payload: OrderCreate, session: Session = Depends(get_session)) 
     session.commit()
     session.refresh(order)
     return order
+
+
+@router.get("", response_model=list[OrderRead], summary="Список заказов клиента")
+def list_orders(
+    account_id: int,
+    session: Session = Depends(get_session),
+    limit: int = Query(default=50, ge=1, le=200),
+) -> list[Order]:
+    stmt = select(Order).where(Order.account_id == account_id).order_by(Order.id).limit(limit)
+    return list(session.scalars(stmt))
 
 
 @router.get("/{order_id}", response_model=OrderRead, summary="Получить заказ")
