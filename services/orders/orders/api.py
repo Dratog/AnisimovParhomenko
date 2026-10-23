@@ -1,14 +1,38 @@
 """Запросы к сервису заказов."""
 
+import httpx
 from fastapi import APIRouter, Depends, HTTPException, Query, status
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
+from orders.config import settings
 from orders.db import get_session
 from orders.models import Order
 from orders.schemas import OrderCreate, OrderRead
 
 router = APIRouter(prefix="/orders", tags=["Заказы"])
+
+
+def _check_account(account_id: int) -> None:
+    try:
+        with httpx.Client(timeout=settings.accounts_timeout_seconds) as client:
+            response = client.get(f"{settings.accounts_url.rstrip('/')}/accounts/{account_id}")
+    except httpx.RequestError:
+        raise HTTPException(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail="Сервис клиентов недоступен",
+        ) from None
+
+    if response.status_code == status.HTTP_404_NOT_FOUND:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"Клиент {account_id} не найден",
+        )
+    if response.status_code != status.HTTP_200_OK:
+        raise HTTPException(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail="Сервис клиентов недоступен",
+        )
 
 
 @router.post(
@@ -18,6 +42,7 @@ router = APIRouter(prefix="/orders", tags=["Заказы"])
     summary="Создать заказ",
 )
 def create_order(payload: OrderCreate, session: Session = Depends(get_session)) -> Order:
+    _check_account(payload.account_id)
     order = Order(**payload.model_dump())
     session.add(order)
     session.commit()
