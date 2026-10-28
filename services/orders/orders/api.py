@@ -1,7 +1,10 @@
 """Запросы к сервису заказов."""
 
+import asyncio
+
 import httpx
 from fastapi import APIRouter, Depends, HTTPException, Query, status
+from fastapi.concurrency import run_in_threadpool
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
@@ -13,11 +16,15 @@ from orders.schemas import OrderCreate, OrderRead
 router = APIRouter(prefix="/orders", tags=["Заказы"])
 
 
-def _check_account(account_id: int) -> None:
+async def _check_account(account_id: int) -> None:
     try:
-        with httpx.Client(timeout=settings.accounts_timeout_seconds) as client:
-            response = client.get(f"{settings.accounts_url.rstrip('/')}/accounts/{account_id}")
-    except httpx.RequestError:
+        # Ограничиваем всю проверку, включая разрешение имени сервиса.
+        async with asyncio.timeout(settings.accounts_timeout_seconds):
+            async with httpx.AsyncClient(timeout=settings.accounts_timeout_seconds) as client:
+                response = await client.get(
+                    f"{settings.accounts_url.rstrip('/')}/accounts/{account_id}"
+                )
+    except (httpx.RequestError, TimeoutError):
         raise HTTPException(
             status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
             detail="Сервис клиентов недоступен",
@@ -41,8 +48,12 @@ def _check_account(account_id: int) -> None:
     status_code=status.HTTP_201_CREATED,
     summary="Создать заказ",
 )
-def create_order(payload: OrderCreate, session: Session = Depends(get_session)) -> Order:
-    _check_account(payload.account_id)
+async def create_order(payload: OrderCreate, session: Session = Depends(get_session)) -> Order:
+    await _check_account(payload.account_id)
+    return await run_in_threadpool(_save_order, payload, session)
+
+
+def _save_order(payload: OrderCreate, session: Session) -> Order:
     order = Order(**payload.model_dump())
     session.add(order)
     session.commit()
