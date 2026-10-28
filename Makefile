@@ -50,7 +50,7 @@ else
 endif
 
 .DEFAULT_GOAL := help
-.PHONY: help check setup test cov lint fmt run run-orders migrate up down logs ps clean
+.PHONY: help check setup test test-integration cov lint fmt run run-orders migrate up down logs ps clean
 
 help: ## Показать список команд
 	@$(PY) $(COMMANDS)
@@ -64,8 +64,11 @@ setup: ## Создать окружение и поставить зависим
 	$(PYTHON) -m pip install -e "./services/accounts[dev]" -e "./services/orders[dev]"
 	@$(PY) $(COMMANDS)
 
-test: ## Прогнать все тесты
+test: ## Прогнать unit/API-тесты
 	$(PYTEST)
+
+test-integration: ## Проверить взаимодействие запущенных сервисов
+	$(PYTEST) -o addopts= -q tests/integration
 
 cov: ## Прогнать тесты и показать покрытие построчно
 	$(PYTEST) --cov-report=term-missing
