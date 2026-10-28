@@ -1,7 +1,5 @@
 """Служебный endpoint /health подтверждает доступность сервиса заказов."""
 
-import os
-
 from fastapi.testclient import TestClient
 
 from orders.main import app
