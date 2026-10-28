@@ -16,6 +16,7 @@ output "servers" {
   value = [
     for index, container in docker_container.server : {
       name     = container.name
+      host     = "127.0.0.1"
       ssh_port = var.ssh_base_port + index
       app_port = var.app_base_port + index
     }

@@ -1,0 +1,5 @@
+# Скопируйте в local.auto.tfvars и подставьте свои значения.
+# Приватный ключ и пароль в этот файл не добавляйте.
+project_name        = "praktikum"
+ssh_public_key_path = "~/.ssh/id_ed25519.pub"
+db_port             = 15432
