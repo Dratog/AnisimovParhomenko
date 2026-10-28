@@ -36,10 +36,10 @@ def accounts_http(monkeypatch) -> Mock:
     handler = Mock(side_effect=existing_account)
     transport = httpx.MockTransport(handler)
 
-    def handle_request(self, request: httpx.Request) -> httpx.Response:
-        return transport.handle_request(request)
+    async def handle_async_request(self, request: httpx.Request) -> httpx.Response:
+        return await transport.handle_async_request(request)
 
-    monkeypatch.setattr(httpx.HTTPTransport, "handle_request", handle_request)
+    monkeypatch.setattr(httpx.AsyncHTTPTransport, "handle_async_request", handle_async_request)
     return handler
 
 
