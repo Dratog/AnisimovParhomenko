@@ -13,7 +13,7 @@
 # Вместо tofu можно писать terraform — язык описания одинаковый.
 
 terraform {
-  required_version = ">= 1.6"
+  required_version = ">= 1.10"
 
   required_providers {
     docker = {
@@ -105,7 +105,7 @@ resource "docker_image" "server" {
   build {
     context = "${path.module}/../server-image"
     build_args = {
-      SSH_PUBLIC_KEY = trimspace(file(var.ssh_public_key_path))
+      SSH_PUBLIC_KEY = trimspace(file(pathexpand(var.ssh_public_key_path)))
     }
   }
 }

@@ -24,6 +24,9 @@ dist/
 *.tfstate.*
 .terraform/
 .terraform.lock.hcl
+*.tfvars
+*.tfvars.json
+*.tfplan
 crash.log
 
 # Ключи доступа
